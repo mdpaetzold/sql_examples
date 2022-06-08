@@ -1,0 +1,54 @@
+--BP Total Sales Orders per Customer with Lifetime Totals by Date Range Ver 1 MP 2014 05 18
+
+--DESCRIPTION: SQL lists out customers with sum of sales orders placed within date range to compare to sum of sales orders in entirety.
+
+--USAGE: Sales and administration departments
+
+SELECT 
+T1.[SlpName], 
+T2.[CardCode], 
+T2.U_RepairFacility,
+T2.State2,
+T2.U_BPOrigin,
+T3.GroupName,
+T2.U_BP_LstAssgDate,
+T2.[CardName],
+T2.U_BP_LstCntcDate,
+T2.CardFName AS 'Redirect Account', 
+MAX(T0.DocDate) AS 'Last Order Date',
+MIN(T0.DocDate) AS 'First Order Date',
+SUM(CASE WHEN T0.[DocDate] >= [%0] AND T0.[DocDate] <= [%0] THEN 1 ELSE 0 END) AS 'TOTAL FOR DATE', 
+SUM(CASE WHEN T0.[DocDate] >= [%0]-365 AND T0.[DocDate] <= ([%0]-1) THEN 1 ELSE 0 END) AS 'TOTAL IN RANGE 1 YEAR', 
+SUM(CASE WHEN T0.[DocDate] >= [%0]-730 AND T0.[DocDate] <= ([%0]-365) THEN 1 ELSE 0 END) AS 'TOTAL IN RANGE 2 YEARS', 
+SUM(CASE WHEN T0.[DocDate] >= '01/01/1990' AND T0.[DocDate]<=[%0] THEN 1 ELSE 0 END) AS 'TOTAL LIFETIME'
+
+FROM 
+ORDR T0  
+
+LEFT OUTER JOIN OCRD T2 
+ON T0.CardCode = T2.CardCode 
+
+LEFT OUTER JOIN OSLP T1 
+ON T2.SlpCode = T1.SlpCode 
+
+LEFT OUTER JOIN OCRG T3
+ON T2.GroupCode = T3.GroupCode
+
+WHERE 
+T2.[CardType] = 'C'
+AND T0.Canceled != 'Y'
+
+GROUP BY 
+T1.[SlpName], 
+T2.[CardCode], 
+T2.[CardName],
+T2.CardFName,
+T3.GroupName,
+T2.U_BPOrigin,
+T2.U_BP_LstCntcDate,
+T2.U_RepairFacility,
+T2.State2,
+T2.U_BP_LstAssgDate
+
+ORDER BY 
+T1.[SlpName]
