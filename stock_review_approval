@@ -1,0 +1,34 @@
+--Inventory review providing review of stock parts ordered and giving a determination of Stock Not Approved, Review Quantity, or Stock Approved based on the number currently on order compared with total purchase history.
+
+SELECT 
+
+CASE 
+WHEN (SUM(T0.QUANTITY) - T2.ONORDER) / (SUM(T0.[Quantity])) <= 0.2 THEN 'STOCK NOT APPROVED'
+WHEN (SUM(T0.QUANTITY) - T2.ONORDER) / (SUM(T0.[Quantity])) > 0.2 AND (SUM(T0.QUANTITY) - T2.ONORDER) / (SUM(T0.[Quantity]))<= 0.5 THEN 'REVIEW QUANTITY - CANNOT EXCEED TOTAL HISTORY'
+WHEN (SUM(T0.QUANTITY) - T2.ONORDER) / (SUM(T0.[Quantity])) >= 0.5 THEN 'STOCK APPROVED'
+ELSE 'Review'
+END AS 'STOCK APPROVAL',
+
+T2.[OnOrder] AS 'CURRENT ON ORDER', 
+
+T0.[ItemCode], 
+T2.[OnHand] AS 'IN STOCK', 
+SUM(T0.[Quantity]) AS 'LIFETIME ORDERED', 
+SUM(T0.QUANTITY) - T2.ONORDER AS 'TOTAL HISTORY',
+MAX(T1.DOCDATE) AS 'Last Order Date'
+
+FROM POR1 T0  
+
+LEFT OUTER JOIN OPOR T1 
+ON T0.[DocEntry] = T1.[DocEntry] 
+
+LEFT OUTER JOIN OITM T2 
+ON T0.[ItemCode] = T2.[ItemCode] 
+
+
+WHERE 
+T0.[ItemCode] LIKE '%%[%1]%%' AND 
+T1.Canceled = 'N'
+
+GROUP BY 
+T0.[ItemCode],T2.[OnHand], T2.[OnOrder]
